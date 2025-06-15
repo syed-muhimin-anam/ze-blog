@@ -1,5 +1,5 @@
 import { createOrUpdateUser, deleteUser } from '@/lib/actions/user';
-import { clerkClient } from '@clerk/nextjs/server'; // ✅ correct import
+import { clerkClient } from '@clerk/nextjs/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 
 export async function POST(req) {
@@ -8,13 +8,13 @@ export async function POST(req) {
     const eventType = evt?.type;
     const { id } = evt?.data;
 
-    console.log(`Received webhook with ID ${id} and event type of ${eventType}`);
-    console.log('Webhook payload:', evt?.data);
+    console.log(`✅ Webhook received — ID: ${id}, Type: ${eventType}`);
+    console.log('Payload:', evt?.data);
 
-    // Handle user.created and user.updated
+    // Handle user creation and updates
     if (eventType === 'user.created' || eventType === 'user.updated') {
       const {
-        id,
+        id: clerkId,
         first_name,
         last_name,
         image_url,
@@ -22,50 +22,47 @@ export async function POST(req) {
         username
       } = evt?.data;
 
-      const email = email_addresses?.[0]?.email_address || ''; // ✅ safe fallback
+      const email = email_addresses?.[0]?.email_address || '';
 
-      try {
-        const user = await createOrUpdateUser(
-          id,
-          first_name,
-          last_name,
-          image_url,
-          email,
-          username
-        );
+      const user = await createOrUpdateUser(
+        clerkId,
+        first_name,
+        last_name,
+        image_url,
+        email,
+        username
+      );
 
-        // Update Clerk metadata after user creation
-        if (user && eventType === 'user.created') {
-          try {
-            await clerkClient.users.updateUserMetadata(id, {
-              publicMetadata: {
-                userMongoId: user._id,
-                isAdmin: user.isAdmin,
-              },
-            });
-          } catch (error) {
-            console.error('❌ Error updating user metadata:', error);
-          }
+      // If user was created, store MongoDB ID in Clerk metadata
+      if (user && eventType === 'user.created') {
+        try {
+          await clerkClient.users.updateUserMetadata(clerkId, {
+            publicMetadata: {
+              userMongoId: user._id,
+              isAdmin: user.isAdmin,
+            },
+          });
+          console.log('✅ Metadata updated for Clerk user:', clerkId);
+        } catch (metaError) {
+          console.error('❌ Error updating Clerk metadata:', metaError);
         }
-      } catch (error) {
-        console.error('❌ Error creating or updating user:', error);
-        return new Response('Error occurred', { status: 400 });
       }
     }
 
-    // Handle user.deleted
+    // Handle user deletion
     if (eventType === 'user.deleted') {
       try {
         await deleteUser(id);
-      } catch (error) {
-        console.error('❌ Error deleting user:', error);
-        return new Response('Error occurred', { status: 400 });
+        console.log('✅ Deleted user from MongoDB with Clerk ID:', id);
+      } catch (deleteErr) {
+        console.error('❌ Error deleting user:', deleteErr);
+        return new Response('Error deleting user', { status: 400 });
       }
     }
 
-    return new Response('Webhook received', { status: 200 });
+    return new Response('✅ Webhook processed successfully', { status: 200 });
   } catch (err) {
-    console.error('❌ Error verifying webhook:', err);
-    return new Response('Error verifying webhook', { status: 400 });
+    console.error('❌ Webhook verification failed:', err);
+    return new Response('Webhook verification failed', { status: 400 });
   }
 }
