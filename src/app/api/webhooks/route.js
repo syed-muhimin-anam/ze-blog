@@ -37,10 +37,10 @@ export async function POST(req) {
 
         if (user && eventType === 'user.created') {
           try {
-            await clerkClient.users.updateUser(clerkId, {
+            await clerkClient.users.updateUserMetadata(clerkId, {
               public_metadata: { // <-- এখানে camelCase থেকে snake_case
-                userMongoId: user._id?.toString() ?? '',
-                isAdmin: user.isAdmin ?? false,
+                userMongoId: user._id,
+                isAdmin: user.isAdmin,
               }
             });
             console.log('✅ Clerk metadata updated');
