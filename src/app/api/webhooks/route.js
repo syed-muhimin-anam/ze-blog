@@ -32,22 +32,30 @@ export async function POST(req) {
           username
         );
 
+        console.log('🧾 MongoDB user created/updated:', user);
+
         if (user && eventType === 'user.created') {
           try {
+            // Debug log before updating metadata
+            console.log('🧠 Setting metadata:', {
+              userMongoId: user._id,
+              isAdmin: user.isAdmin,
+            });
+
             await clerkClient.users.updateUser(clerkId, {
               publicMetadata: {
-                userMongoId: user._id,
-                isAdmin: user.isAdmin,
+                userMongoId: user._id?.toString?.() ?? '',
+                isAdmin: user.isAdmin ?? false,
               },
             });
 
             console.log('✅ Clerk metadata updated');
           } catch (metaErr) {
-            console.error(' Failed to update Clerk metadata:', metaErr);
+            console.error('❌ Failed to update Clerk metadata:', metaErr);
           }
         }
       } catch (createErr) {
-        console.error(' Failed to create/update user:', createErr);
+        console.error('❌ Failed to create/update user:', createErr);
         return new Response('Failed to process user data', { status: 400 });
       }
     }
@@ -57,14 +65,14 @@ export async function POST(req) {
         await deleteUser(clerkId);
         console.log('✅ User deleted from MongoDB');
       } catch (deleteErr) {
-        console.error(' Failed to delete user:', deleteErr);
+        console.error('❌ Failed to delete user:', deleteErr);
         return new Response('Failed to delete user', { status: 400 });
       }
     }
 
     return new Response(`✅ Webhook processed: ${eventType}`, { status: 200 });
   } catch (err) {
-    console.error(' Webhook verification failed:', err);
+    console.error('❌ Webhook verification failed:', err);
     return new Response('Webhook verification failed', { status: 400 });
   }
 }
