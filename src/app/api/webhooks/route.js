@@ -36,22 +36,17 @@ export async function POST(req) {
       // If user was created, store MongoDB ID in Clerk metadata
       if (user && eventType === 'user.created') {
         try {
-          await clerkClient.users.updateUserMetadata(id, {
+          await clerkClient.users.updateUserMetadata(clerkId, {
             publicMetadata: {
               userMongoId: user._id,
               isAdmin: user.isAdmin,
             },
           });
-          console.log('✅ Metadata updated for Clerk user:', id);
+          console.log('✅ Metadata updated for Clerk user:', clerkId);
         } catch (metaError) {
           console.error('❌ Error updating Clerk metadata:', metaError);
         }
       }
-
-
-
-
-      
     }
 
     // Handle user deletion
