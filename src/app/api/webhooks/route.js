@@ -1,5 +1,5 @@
 import { createOrUpdateUser, deleteUser } from '@/lib/actions/user';
-import { users } from '@clerk/nextjs/api';
+import { clerkClient } from '@clerk/nextjs/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 
 export async function POST(req) {
@@ -36,7 +36,7 @@ export async function POST(req) {
 
         if (user && eventType === 'user.created') {
           try {
-            await users.updateUser(clerkId, {
+            await clerkClient.users.updateUser(clerkId, {
               publicMetadata: {
                 userMongoId: user._id?.toString?.() ?? '',
                 isAdmin: user.isAdmin ?? false,
