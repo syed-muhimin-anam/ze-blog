@@ -65,7 +65,7 @@ export async function POST(req) {
       }
     }
 
-    return new Response(`✅ Webhook processed: ${eventType}`, { status: 200 });
+    return new Response( `Webhook processed: ${eventType}`, { status: 200 });
   } catch (err) {
     console.error('❌ Webhook verification failed:', err);
     return new Response('Webhook verification failed', { status: 400 });
