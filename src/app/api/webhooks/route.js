@@ -16,6 +16,9 @@ export async function POST(req) {
       username
     } = evt?.data;
 
+
+
+    
     const email = email_addresses?.[0]?.email_address || '';
 
     console.log(`✅ Webhook Event: ${eventType}`);
