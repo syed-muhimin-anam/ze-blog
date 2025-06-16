@@ -1,4 +1,5 @@
 import { createOrUpdateUser, deleteUser } from '@/lib/actions/user';
+// import { clerkClient } from '@clerk/nextjs/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { clerkClient } from '@clerk/nextjs/server';
 
@@ -36,21 +37,18 @@ export async function POST(req) {
 
         if (user && eventType === 'user.created') {
           try {
-            // ✅ Ensuring clerkClient is instantiated properly
-            const client = await clerkClient;
-
-            await client.users.updateUserMetadata(clerkId, {
-              publicMetadata: {
-                userMongoId: user._id?.toString() ?? '',
-                isAdmin: user.isAdmin ?? false,
-              },
+            await clerkClient.users.updateUserMetadata(clerkId, {
+              publicMetadata: { // <-- এখানে camelCase থেকে snake_case
+                userMongoId: user._id,
+                isAdmin: user.isAdmin,
+              }
             });
-
             console.log('✅ Clerk metadata updated');
           } catch (metaErr) {
             console.error('❌ Failed to update Clerk metadata:', metaErr);
           }
         }
+
       } catch (createErr) {
         console.error('❌ Failed to create/update user:', createErr);
         return new Response('Failed to process user data', { status: 400 });
