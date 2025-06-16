@@ -1,5 +1,4 @@
 import { createOrUpdateUser, deleteUser } from '@/lib/actions/user';
-// import { clerkClient } from '@clerk/nextjs/server';
 import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { clerkClient } from '@clerk/nextjs/server';
 
@@ -38,7 +37,7 @@ export async function POST(req) {
         if (user && eventType === 'user.created') {
           try {
             await clerkClient.users.updateUserMetadata(clerkId, {
-              publicMetadata: { // <-- এখানে camelCase থেকে snake_case
+              publicMetadata: {
                 userMongoId: user._id,
                 isAdmin: user.isAdmin,
               }
@@ -65,7 +64,8 @@ export async function POST(req) {
       }
     }
 
-    return new Response( `Webhook processed: ${eventType}`, { status: 200 });
+    return new Response(`✅ Webhook processed: ${eventType}`, { status: 200 });
+
   } catch (err) {
     console.error('❌ Webhook verification failed:', err);
     return new Response('Webhook verification failed', { status: 400 });
